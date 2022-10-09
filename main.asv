@@ -42,17 +42,15 @@ function newq = getNextPos(q, targetq)
 end
 
 function [nextQ,nextTargetQ] = EV10Flowchart(q, targetq)
-    global handoffready
     %rotate between [pi/2 0 pi/2 0 0 0] and 0
     state1 = deg2rad([0 90 -80 0 0 -100]) %handoff
-    state2 = deg2rad([90 0 0 0 0 0])     %deposit
+    state2 = deg2rad([160 0 0 0 0 0])     %deposit
     tolerance = 0.05
     
     nextTargetQ = targetq
     if (targetq == state1)
-        if(atQ(q,state1,tolerance) && handoffready==1)
+        if atQ(q,state1,tolerance)
             nextTargetQ = state2
-            handoffready = 0
         end
     elseif (targetq == state2)
         if atQ(q,state2,tolerance)
