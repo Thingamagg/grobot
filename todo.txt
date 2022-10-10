@@ -1,0 +1,28 @@
+- robot functions 
+
+1. 2 robot arms, modelled
+
+2. matlab gui to control joint and cartesian movements 
+
+3. estop operation, 2 action resume. no uiwait 
+- while loop during robot moving trajectory, while e stop =1, pause. add state to check for e stop =0 and resume button to resume.
+- for loop for robot moving trajectory (robot animate?), remove 1 iteration when robot moving to keep in place. 
+- set q as current configutation when e stop is pressed?
+
+4. simulated environment . bonus for real robot and augmented sensors 
+- grab some assets of groceries off the net, shelves, rails, people, etc. 
+
+5. safety functionality 
+- react to asynchronous stop from user e.g. enter unsafe zone
+-\when unsafe zone triggered, enploy e stop protocol
+
+- prevent collisions prioritise movement around collision as opposed to detecting and stopping 
+
+
+- make one robot retreat from safety symbol by second robot using visual servoing and rmrc
+
+6. code repository and code standard adherance 
+
+- bonus: reaction to real RGB-D sensor data 
+
+- bonus: hardware for safety, collision detection, end effector
