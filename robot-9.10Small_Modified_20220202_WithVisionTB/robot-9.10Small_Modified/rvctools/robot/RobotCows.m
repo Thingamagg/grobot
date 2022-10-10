@@ -63,6 +63,7 @@ classdef RobotCows < handle
             for cowIndex = 1:self.cowCount
                 % Move Forward
                 self.cow{cowIndex}.base = self.cow{cowIndex}.base * se3(se2(0.2, 0, 0));
+                help animate
                 animate(self.cow{cowIndex},0);
                 % Turn randomly
                 self.cow{cowIndex}.base(1:3,1:3) = self.cow{cowIndex}.base(1:3,1:3) *  rotz((rand-0.5) * 30 * pi/180);
