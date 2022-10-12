@@ -1,29 +1,28 @@
 classdef (ConstructOnLoad = true) GroceryObject < handle
     properties
-        pose
-        spherex
-        spherey
-        spherez
-        name
-        model
-        scale
+        count = 1
+        object
+        shelfsize = [3,3]
+        workspacedimensions
     end
     methods
         function obj = GroceryObject(pose)
-            obj.pose = pose
+            %obj.pose = pose
             obj.name = 'Grocery'
             [obj.spherex,obj.spherey,obj.spherez] = sphere(10)
             obj.model = obj.GetModel()
-            obj.sca
+            obj.scale = 0.1
         end
+        
+        function object = initSingleGroceryObject(pose)
+            object = 
         function print(obj)
             xyzpose = transl(obj.pose)
             surf(obj.spherex*0.5 + xyzpose(1), obj.spherey*0.5 + xyzpose(2), obj.spherez*0.5 + xyzpose(3))
         end
         
-        function model = GetModel(obj)
-            
-            [faceData,vertexData] = plyread('cube.ply','tri');
+        function model = GetCylinder(obj)
+            [faceData,vertexData] = plyread('cylinder.ply','tri');
             L1 = Link('alpha',-pi/2,'a',0,'d',0.3,'offset',0);
             model = SerialLink(L1,'name',obj.name);
             model.faces = {faceData,[]};
@@ -36,8 +35,8 @@ classdef (ConstructOnLoad = true) GroceryObject < handle
         end
         
         function animate(obj)
-            obj.model.base = obj.pose
-            animate(obj.model,0)
+            obj.model.base = obj.pose;
+            obj.model.animate(0);
         end
     end
 end

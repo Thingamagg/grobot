@@ -6,7 +6,7 @@ function [ ] = main()
     mdl_ev10
 
     robot1 = p560
-    global q1 q1_target q2 q2_target speedlimit handoffready
+    global q1 q1_target q2 q2_target speedlimit handoffready held
     q1 = zeros(1,6)
     q1_target = zeros(1,6)
     robot2 = ev10
@@ -14,34 +14,33 @@ function [ ] = main()
     q2_target = zeros(1,6)
     speedlimit = 0.1
     handoffready = 0
-    obj1 = GroceryObject(transl(2,3,0))
+    held = [2 1]
 
     
 
-    workspace = [-4 4 -4 4 -4 4];
+    workspace = [-4 4 -4 4 -1 4];
     scale = 0.2
     robot1.base = robot1.base * transl(2,0,0)
-    robot1.plot(q1,'workspace',workspace,'scale',scale,'view',[-30,30],'delay',0)
+    robot1.plot(q1,'workspace',workspace,'scale',scale,'delay',0)
     hold on
     robot2.plot(q2,'workspace',workspace,'scale',scale)
-    obj1.plot(workspace)
-    for k1 = 1:100
+    objs = GroceryObject(2,workspace)
+    for k1 = 1:20
         global speedlimit q1 q1_target q2 q2_target handoffready
         [q1,q1_target] = P560Flowchart(q1,q1_target);
         robot1.animate(q1);
         [q2,q2_target] = EV10Flowchart(q2,q2_target);
         robot2.animate(q2);
-        obj1.pose = robot1.fkine(q1);
-        %obj1.model.base = obj1.pose
-        obj1.animate();
-        hold off
-        drawnow
+        if held(1)>0
+                objs.object{held(1)}.base = robot1.fkine(q1)
+        end
+        if held(2)>0
+                objs.object{held(2)}.base = robot2.fkine(q2)
+        end
+        objs.animate()
+        %drawnow
     end
 end
-
-
-
-
 
 
 function newq = getNextPos(q, targetq)
