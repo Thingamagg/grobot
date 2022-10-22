@@ -7,7 +7,7 @@ function [ ] = main()
     
     global q1 q1_target q2 q2_target q2_base q2_base_target speedlimit obj_target handoffready held;
                  %x    y    z
-    workspace = [-2 4.5 -2 2 -0.5 3];
+    workspace = [-3 4.5 -2 2 -0.5 3];
     axis normal
     view(3)
     scale = 0.2;
@@ -30,7 +30,7 @@ function [ ] = main()
 
     robot1.workspace = workspace;robot2.workspace = workspace
 
-    robot1.model.base = robot1.model.base * transl(-1,0,0);
+    robot1.model.base = robot1.model.base * transl(-1,0.2,0.42);
     %robot1.model.plot(q1,'workspace',workspace,'scale',scale,'delay',0);
     robot1.PlotAndColourRobot();
     hold on
@@ -204,18 +204,18 @@ function newVerts = transform(verts,pose)
     newVerts = UpdatedPoints(:,1:3)
 end
 
+function drawObject(name,pose)
+    [f,v,data] = plyread(name, 'tri');
+    vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue]/256;
+    mesh_h = trisurf(f,v(:,1),v(:,2),v(:,3) ...
+        , 'FaceVertexCData', vertexColours, 'EdgeColor','interp','EdgeLighting','Flat');
+    mesh_h.Vertices = transform(mesh_h.Vertices,pose);
+end
+
+
 function drawEnvironment()
-    [f,v,data] = plyread('shelf fix.ply', 'tri')            %% Shelf 1
-    vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue]/256
-    shelfMesh_h = trisurf(f,v(:,1),v(:,2),v(:,3) ...
-        , 'FaceVertexCData', vertexColours, 'EdgeColor','interp','EdgeLighting','Flat')
-    
-    shelfMesh_h.Vertices = transform(shelfMesh_h.Vertices,(transl([1 0.6 0])*trotz(90,'deg')))
-    
-    [f,v,data] = plyread('shelf fix.ply', 'tri')            %% Shelf 2
-    vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue]/256
-    shelfMesh2_h = trisurf(f,v(:,1),v(:,2),v(:,3) ...
-        , 'FaceVertexCData', vertexColours, 'EdgeColor','interp','EdgeLighting','Flat')
-    shelfMesh2_h.Vertices = transform(shelfMesh2_h.Vertices,(transl([3 0.6 0])*trotz(90,'deg')))
-    %drawnow()
+    drawObject('shelf fix.ply',(transl([1 0.6 0])*trotz(90,'deg')));
+    drawObject('shelf fix.ply',(transl([3 0.6 0])*trotz(90,'deg')));
+    drawObject('table.ply',(transl([-1.5 0.5 0])));
+    drawObject('monitor.ply',(transl([-2.4 0.6 0.42])));
 end
