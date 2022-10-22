@@ -15,28 +15,31 @@ classdef (ConstructOnLoad = true) GroceryObject < handle
             %[obj.spherex,obj.spherey,obj.spherez] = sphere(10)
             %obj.model = obj.GetModel()
             %obj.scale = 0.1
-            coords = self.getRandomShelfLocations()
-            self.workspace = workspace
+            coords = self.getRandomShelfLocations();
+            self.workspace = workspace;
             for i = 1:self.count
-                self.object{i} = self.initSingleGroceryObject(i)
-                self.object{i}.base = transl(coords(i,:))
-                self.plot(self.object{i},self.workspace)
+                self.object{i} = self.initSingleGroceryObject(i);
+                self.object{i}.base = transl(coords(i,:));
+                self.plot(self.object{i},self.workspace);
             end
             
         end
         
         function object = initSingleGroceryObject(self,identifier)
-            object = self.GetCylinder(identifier)
+            object = self.GetCylinder(identifier);
         end
         
         function coords = getRandomShelfLocations(self)
-            coords = [[2 2 0];[2 2 1]]
+            basez = 0.35;
+            dimensions = [-0.4 -0.5 0.3];
+            slots = [8 3]; slots(1) = max(slots(1),self.count);
+            coords = [randperm(slots(1),self.count)*dimensions(1); dimensions(2)*ones(1,self.count);(randi(slots(2),1,self.count)*dimensions(3))+basez]';
         end
         
         function model = GetCylinder(obj,identifier)
             [faceData,vertexData] = plyread('cylinder.ply','tri');
             L1 = Link('alpha',-pi/2,'a',0,'d',0.3,'offset',0);
-            model = SerialLink(L1,'name',['cow',num2str(identifier)]);
+            model = SerialLink(L1,'name',['grocery',num2str(identifier)]);
             model.faces = {faceData,[]};
             vertexData(:,2) = vertexData(:,2) + 0.4;
             model.points = {vertexData * rotx(-pi/2),[]};
@@ -50,9 +53,9 @@ classdef (ConstructOnLoad = true) GroceryObject < handle
             %obj.model.base = obj.pose;
             for i = 1:self.count
                 %self.object{i}.animate(0);
-                animate(self.object{i},0)
+                animate(self.object{i},0);
             end
-            drawnow()
+            drawnow();
         end
     end
 end
