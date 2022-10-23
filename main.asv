@@ -48,14 +48,20 @@ function [ ] = main()
     target = objs.object{obj_target}.base;
     
     
-    drawEnvironment();
+    %drawEnvironment();
     
     
     
     q2_target = findQ(objs.object{obj_target}.base,robot2.model);
     q2_base_target = findBasePos(objs.object{obj_target}.base);
     
+    %objs.object{obj_target}.base * transl([robot2.base(1,4)-objs.object{obj_target}.base(1,4) 0 0])
+    %a = findQ(objs.object{obj_target}.base,robot2)
+
     view(3)
+    %robot2.model.teach()
+    
+    
     for k1 = 1:1000
         %global velocitylimit q1 q1_target q2 q2_target obj_target handoffready
         [q1,q1_target] = EV10Flowchart(q1,q1_target,objs,robot1.model);
@@ -177,7 +183,7 @@ function [nextQ,nextTargetQ] = EV10Flowchart(q,targetq,groceries,ev10)
         elseif (targetq == state2)
             if atPosition(ev10,q,state2,tolerance)
                 nextTargetQ = state1;
-                placeInCart(groceries,held(1))
+                cleanUp(groceries.object(held(1)))
                 held(1) = 0
             end
         else
@@ -188,15 +194,13 @@ function [nextQ,nextTargetQ] = EV10Flowchart(q,targetq,groceries,ev10)
 end
 
 function matrix = cartCoords(x,y)
-    matrix = transl([(-1.5 +(x*0.2)),(-0.6 + (y*0.2)),(0.5)])
+    matri
 end
 
 function placeInCart(groceries,num)
-    positions = [1 1 2 2 3 3 4 4;repmat([0 1], 1, 4);]'
-    if num <= 8
-        groceries.object{num}.base = cartCoords(positions(num,1),positions(num,2))
-    end
-end
+    positions = [repmat([0 1], 1, 4);repmat([1 2 3 4], 1, 2)]'
+    for i = 1:8
+        if 
 
 % function closest = findClosestObject(groceries)
 %     closest = 1
@@ -223,7 +227,7 @@ end
 function target = selectNewTarget()
     global obj_target
     target = obj_target
-    if (obj_target<8)
+    if (obj_target<10)
         target = obj_target+1
     end
 end
@@ -295,8 +299,8 @@ function drawEnvironment()
     surf([-3,-3;5,5],[-2,2;-2,2],[0.01,0.01;0.01,0.01],'CData',imread('floor wide.png'),'FaceColor','texturemap');
 
 
-    drawObject('shelf fix.ply',(transl([1 0.5 0])*trotz(90,'deg')));
-    drawObject('shelf fix.ply',(transl([3 0.5 0])*trotz(90,'deg')));
+    drawObject('shelf fix.ply',(transl([1 0.6 0])*trotz(90,'deg')));
+    drawObject('shelf fix.ply',(transl([3 0.6 0])*trotz(90,'deg')));
     drawObject('table.ply',(transl([-1.5 0.5 0.42])));
     drawObject('monitor.ply',(transl([-2.4 0.6 0.84])));
     drawObject('shopping_cart.ply',(transl([-1 -0.5 0])*trotz(180,'deg')));

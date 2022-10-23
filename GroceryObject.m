@@ -30,14 +30,14 @@ classdef (ConstructOnLoad = true) GroceryObject < handle
         end
         
         function coords = getRandomShelfLocations(self)
-            basez = 0.2;
-            dimensions = [0.45 0.6 1.1];
+            basez = 0.5;
+            dimensions = [0.45 0.3 1.1];
             slots = [8 2]; slots(1) = max(slots(1),self.count);
             coords = [randperm(slots(1),self.count)*dimensions(1); dimensions(2)*ones(1,self.count);((randi(slots(2),1,self.count)-1)*dimensions(3))+basez]';
         end
         
         function model = GetCylinder(obj,identifier)
-            [faceData,vertexData] = plyread('cylinder.ply','tri');
+            [faceData,vertexData] = plyread('bottle.ply','tri');
             L1 = Link('alpha',-pi/2,'a',0,'d',0.3,'offset',0);
             model = SerialLink(L1,'name',['grocery',num2str(identifier)]);
             model.faces = {faceData,[]};
