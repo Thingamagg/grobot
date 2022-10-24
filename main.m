@@ -2,16 +2,18 @@ function [ ] = main()
     clf
     clear all
 
+    stopbutton
+    readybutton
     UR10_modified;
     EV10;
     
-    global q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready passover held q2Height;
+    global stopflag q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready passover held q2Height;
                  %x    y    z
     workspace = [-3 4.5 -2 2 -0 3];
     axis normal
     view(3)
     scale = 0.2;
-
+    stopflag = 0;
                                                                             %Using this many global variables is 100% bad practice but don't have a better solution
     robot1 = EV10();%robot1.workspace = workspace
     q1 = zeros(1,6);%q1(4) = [pi/2]
@@ -22,12 +24,12 @@ function [ ] = main()
     q2_target = zeros(1,6);
     q2_base = transl([0 0 0]);
     q2_base_target = transl([2 0 0.2]);
-    q2Height = 0.25
+    q2Height = 0.25;
     velocitylimit = 0.2;
     angularlimit = 0.3;
     obj_target = 1;
     handoffready = 0;
-    passover = [0 0]
+    passover = [0 0];
     held = [0 0];
     
     robot1.workspace = workspace;robot2.workspace = workspace;
@@ -60,21 +62,24 @@ function [ ] = main()
     
     %robot2.model.teach()
     
-    for k1 = 1:1000
-        %global velocitylimit q1 q1_target q2 q2_target obj_target handoffready
-        [q1,q1_target] = EV10Flowchart(q1,q1_target,objs,robot1.model);
-        robot1.model.animate(q1);
-        [q2,q2_target] = UR10Flowchart(q2,q2_target,robot2.model.base,objs,robot2.model);
-        robot2.model.base = q2_base;
-        robot2.model.animate(q2);
-        if held(1)>0
-                objs.object{held(1)}.base = robot1.model.fkine(q1);
+    while(true)
+        pause(0.001);
+        if not(stopflag)
+            %global velocitylimit q1 q1_target q2 q2_target obj_target handoffready
+            [q1,q1_target] = EV10Flowchart(q1,q1_target,objs,robot1.model);
+            robot1.model.animate(q1);
+            [q2,q2_target] = UR10Flowchart(q2,q2_target,robot2.model.base,objs,robot2.model);
+            robot2.model.base = q2_base;
+            robot2.model.animate(q2);
+            if held(1)>0
+                    objs.object{held(1)}.base = robot1.model.fkine(q1);
+            end
+            if held(2)>0
+                    objs.object{held(2)}.base = robot2.model.fkine(q2);
+            end
+            objs.animate()
+            %drawnow
         end
-        if held(2)>0
-                objs.object{held(2)}.base = robot2.model.fkine(q2);
-        end
-        objs.animate()
-        %drawnow
     end
 end
 
@@ -101,7 +106,6 @@ end
 function newq = calculateJacobian(robot,q,targetq)
     global velocitylimit angularlimit;
     %newq = q+maxMove(targetq-q,velocitylimit);
-    fprintf('heading towards: ');targetq*180/pi
     state1 = robot.fkine(q);
     state2 = robot.fkine(targetq);
     a = transl(state1);b=transl(state2);
@@ -148,24 +152,24 @@ function [nextQ,nextTargetQ] = UR10Flowchart(q, targetq, base, groceries, ur10)
             nextTargetQ = findQ(groceries.object{obj_target}.base,ur10);
             q2_base_target = findBasePos(groceries.object{obj_target}.base)
             handoffready = 0;
-            held = [held(2), 0]
-            passover(2) = 0
+            held = [held(2), 0];
+            passover(2) = 0;
         end
     else% (targetq == objgrab_q)
         if atPosition(ur10,q,targetq,tolerance) && atQ(base,q2_base_target,tolerance)
             nextTargetQ = handoff_q;
             held(2) = obj_target;
             q2_base_target = transl([0 0 0]);
-            passover(2) = 0
+            passover(2) = 0;
         end
     %else
         %nextTargetQ = objgrab_q;
     end
     
     if atPosition(ur10,q,state3,tolerance)
-       passover(2) = 1
+       passover(2) = 1;
     end
-    if passover(2) == 1
+    if passover(2) == 1;
         nextQ = getNextPos(ur10,q,nextTargetQ);
         q2_base = getNextMatrix(q2_base,q2_base_target);
     else
@@ -189,20 +193,20 @@ function [nextQ,nextTargetQ] = EV10Flowchart(q,targetq,groceries,ev10)
             if atPosition(ev10,q,state1,tolerance)
                 nextTargetQ = state2;
                 handoffready = 1;
-                passover(1) = 0
+                passover(1) = 0;
             end
         elseif (targetq == state2)
             if atPosition(ev10,q,state2,tolerance)
                 nextTargetQ = state1;
                 placeInCart(groceries,held(1))
-                held(1) = 0
-                passover(1) = 0
+                held(1) = 0;
+                passover(1) = 0;
             end
         else
             nextTargetQ = state1;
         end
         if atPosition(ev10,q,state3,tolerance)
-            passover(1) = 1
+            passover(1) = 1;
         end
         
         if passover(1) == 1
@@ -329,5 +333,41 @@ function drawEnvironment()
     drawObject('HUMAN BODY.ply',(transl([-2.5 -0.4 0])*trotz(60,'deg')));
     drawObject('barrier.ply',(transl([-2 -1 0])*trotz(90,'deg')));
     drawObject('barrier.ply',(transl([4 -1 0])*trotz(90,'deg')));
+    drawObject('rail.ply',(transl([2 0 0])*trotz(90,'deg')));
+    drawObject('estop.ply',(transl([-2.2 0.2 0.84])));
 
 end
+
+
+function stopbutton
+    button = uicontrol
+    button.String = 'Stop'
+    button.Position = [25 25 80 80]
+    button.Callback = @Stop
+end
+
+function readybutton
+    button = uicontrol
+    button.String = 'Restart'
+    button.Position = [120 25 60 30]
+    button.Callback = @Ready
+end
+    
+function Stop(btn,event)
+    global stopflag
+    if stopflag > 0
+        fprintf('Stop Button Released\n');
+        stopflag = 2;
+    else
+        fprintf('Stop Button Engaged\n');
+        stopflag = 1;
+    end
+end
+
+function Ready(btn,event)
+global stopflag
+    if stopflag==2
+        stopflag = 0;
+    end
+end
+

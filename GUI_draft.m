@@ -22,7 +22,7 @@ function varargout = GUI_draft(varargin)
 
 % Edit the above text to modify the response to help GUI_draft
 
-% Last Modified by GUIDE v2.5 17-Oct-2022 16:14:28
+% Last Modified by GUIDE v2.5 24-Oct-2022 03:10:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -77,17 +77,20 @@ function varargout = GUI_draft_OutputFcn(hObject, eventdata, handles)
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
-
+cla
 axes(handles.axes1); 
-L1 = Link('d',0.0892,'a',0,'alpha',-pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
-L2 = Link('d',0.1357,'a',0.425,'alpha',-pi,'offset',-pi/2,'qlim',[deg2rad(-90),deg2rad(90)]); 
-L3 = Link('d',0.1197,'a',0.39243,'alpha',pi,'offset',0,'qlim',[deg2rad(-170),deg2rad(170)]); 
-L4 = Link('d',0.093,'a',0,'alpha',-pi/2,'offset',-pi/2,'qlim',[deg2rad(-360),deg2rad(360)]); 
-L5 = Link('d',0.093,'a',0,'alpha',-pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
-L6 = Link('d',0,'a',0,'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
-model = SerialLink([L1 L2 L3 L4 L5 L6],'name','UR5'); 
+
+main;
+
+L1 = Link('d',0.1807,'a',0,'alpha',pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
+L2 = Link('d',0,'a',-0.6127,'alpha',0,'offset',0,'qlim',[deg2rad(-90),deg2rad(90)]); 
+L3 = Link('d',0,'a',-0.57155,'alpha',0,'offset',0,'qlim',[deg2rad(-170),deg2rad(170)]); 
+L4 = Link('d',0.17415,'a',0,'alpha',pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
+L5 = Link('d',0.11985,'a',0,'alpha',-pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
+L6 = Link('d',0.11655,'a',0,'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
+model = SerialLink([L1 L2 L3 L4 L5 L6],'name','UR10'); 
 for linkIndex = 0:model.n 
-    [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['UR5Link',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>         
+    [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['UR10Link',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>         
     model.faces{linkIndex+1} = faceData; 
     model.points{linkIndex+1} = vertexData; 
 end 
@@ -116,10 +119,6 @@ data = guidata(hObject);
 data.model = model; 
 guidata(hObject,data); 
  
-
-
-  
-
 
 % --------------------------------------------------------------------
 function FileMenu_Callback(hObject, eventdata, handles)
@@ -944,5 +943,42 @@ function axes1_CreateFcn(hObject, eventdata, handles)
 % --- Executes on mouse press over axes background.
 function axes1_ButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to axes1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on slider movement.
+function q1_2_Callback(hObject, eventdata, handles)
+data = get(handles.q1_2,'Value');
+q = handles.model2.getpos; 
+tr = handles.model2.fkine(q); 
+
+q(1) = data;
+ 
+handles.model2.animate(q);
+
+% hObject    handle to q1_2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function q1_2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to q1_2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on button press in Estop.
+function Estop_Callback(hObject, eventdata, handles)
+% hObject    handle to Estop (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
