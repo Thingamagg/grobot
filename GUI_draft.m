@@ -116,15 +116,6 @@ data = guidata(hObject);
 data.model = model; 
 guidata(hObject,data); 
  
-q = model.getpos; 
-tr = model.fkine(q); 
-for i=0.1:10
-tr(1,4) = tr(1,4) + i;
-pause(1);
-newQ = model.ikcon(tr,q); 
-model.animate(newQ);
-end
- 
 
 % --------------------------------------------------------------------
 function FileMenu_Callback(hObject, eventdata, handles)
