@@ -72,7 +72,8 @@ classdef EV10 < handle
                 warning('Please check the joint limits. They may be unsafe')
             end
             % Display robot
-            self.model.plot3d(zeros(1,self.model.n),'noarrow','workspace',self.workspace);
+            q = zeros(1,self.model.n);q(4)=pi/2
+            self.model.plot3d(q,'noarrow','workspace',self.workspace);
             if isempty(findobj(get(gca,'Children'),'Type','Light'))
                 camlight
             end  

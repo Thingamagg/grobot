@@ -5,16 +5,16 @@ function [ ] = main()
     UR10_modified;
     EV10;
     
-    global q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready held q2Height;
+    global q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready passover held q2Height;
                  %x    y    z
     workspace = [-3 4.5 -2 2 -0 3];
     axis normal
     view(3)
     scale = 0.2;
 
-        
+                                                                            %Using this many global variables is 100% bad practice but don't have a better solution
     robot1 = EV10();%robot1.workspace = workspace
-    q1 = zeros(1,6);
+    q1 = zeros(1,6);%q1(4) = [pi/2]
     q1_target = zeros(1,6);
     
     robot2 = UR10_modified();
@@ -27,9 +27,9 @@ function [ ] = main()
     angularlimit = 0.3;
     obj_target = 1;
     handoffready = 0;
+    passover = [0 0]
     held = [0 0];
     
-
     robot1.workspace = workspace;robot2.workspace = workspace;
 
     robot1.model.base = robot1.model.base * transl(-1,0.2,0.84);
@@ -50,12 +50,16 @@ function [ ] = main()
     
     drawEnvironment();
     
-    
-    
+    %q1 = deg2rad([-90 20 -115 90 0 0]);
+    %q2 = deg2rad([-90 -135 45 0 0 0]);
     q2_target = findQ(objs.object{obj_target}.base,robot2.model);
     q2_base_target = findBasePos(objs.object{obj_target}.base);
     
     view(3)
+    
+    
+    %robot2.model.teach()
+    
     for k1 = 1:1000
         %global velocitylimit q1 q1_target q2 q2_target obj_target handoffready
         [q1,q1_target] = EV10Flowchart(q1,q1_target,objs,robot1.model);
@@ -95,8 +99,9 @@ function lambda = getManipulability(J,epsilon)
 end
 
 function newq = calculateJacobian(robot,q,targetq)
-global velocitylimit angularlimit;
+    global velocitylimit angularlimit;
     %newq = q+maxMove(targetq-q,velocitylimit);
+    fprintf('heading towards: ');targetq*180/pi
     state1 = robot.fkine(q);
     state2 = robot.fkine(targetq);
     a = transl(state1);b=transl(state2);
@@ -130,10 +135,10 @@ function newm = getNextMatrix(m, targetm)
 end
 
 function [nextQ,nextTargetQ] = UR10Flowchart(q, targetq, base, groceries, ur10)
-    global handoffready obj_target held q2_base q2_base_target q2Height
+    global handoffready obj_target held q2_base q2_base_target q2Height passover
     %rotate between [pi/2 0 pi/2 0 0 0] and 0
     handoff_q = deg2rad([0 -120 95 -57 180 -80]); %handoff
-    %objgrab_q = deg2rad([90 0 0 0 0 0]);     %object
+    state3 = deg2rad([-90 -135 45 0 0 0]);
     
     tolerance = 0.05;
     nextTargetQ = targetq;
@@ -144,26 +149,37 @@ function [nextQ,nextTargetQ] = UR10Flowchart(q, targetq, base, groceries, ur10)
             q2_base_target = findBasePos(groceries.object{obj_target}.base)
             handoffready = 0;
             held = [held(2), 0]
+            passover(2) = 0
         end
     else% (targetq == objgrab_q)
         if atPosition(ur10,q,targetq,tolerance) && atQ(base,q2_base_target,tolerance)
             nextTargetQ = handoff_q;
             held(2) = obj_target;
             q2_base_target = transl([0 0 0]);
+            passover(2) = 0
         end
     %else
         %nextTargetQ = objgrab_q;
     end
-    nextQ = getNextPos(ur10,q,nextTargetQ);
-    q2_base = getNextMatrix(q2_base,q2_base_target);
-
+    
+    if atPosition(ur10,q,state3,tolerance)
+       passover(2) = 1
+    end
+    if passover(2) == 1
+        nextQ = getNextPos(ur10,q,nextTargetQ);
+        q2_base = getNextMatrix(q2_base,q2_base_target);
+    else
+        nextQ = getNextPos(ur10,q,state3);
+    end
 end
 
 function [nextQ,nextTargetQ] = EV10Flowchart(q,targetq,groceries,ev10)
-    global handoffready held
+    global handoffready held passover
     state1 = deg2rad([-30 45 -135 90 -120 -20]); %ready to handoff
     state2 = deg2rad([-90 -20 -80 90 -90 -20]);    %deposit
+    state3 = deg2rad([-90 20 -115 90 0 0]);     %collision avoidance
     tolerance = 0.1;
+    
     
     nextTargetQ = targetq;
     nextQ = q;
@@ -173,17 +189,27 @@ function [nextQ,nextTargetQ] = EV10Flowchart(q,targetq,groceries,ev10)
             if atPosition(ev10,q,state1,tolerance)
                 nextTargetQ = state2;
                 handoffready = 1;
+                passover(1) = 0
             end
         elseif (targetq == state2)
             if atPosition(ev10,q,state2,tolerance)
                 nextTargetQ = state1;
                 placeInCart(groceries,held(1))
                 held(1) = 0
+                passover(1) = 0
             end
         else
             nextTargetQ = state1;
         end
-        nextQ = getNextPos(ev10,q,nextTargetQ);
+        if atPosition(ev10,q,state3,tolerance)
+            passover(1) = 1
+        end
+        
+        if passover(1) == 1
+            nextQ = getNextPos(ev10,q,nextTargetQ);
+        else
+            nextQ = getNextPos(ev10,q,state3);
+        end
     end
 end
 
@@ -295,10 +321,13 @@ function drawEnvironment()
     surf([-3,-3;5,5],[-2,2;-2,2],[0.01,0.01;0.01,0.01],'CData',imread('floor wide.png'),'FaceColor','texturemap');
 
 
-    drawObject('shelf fix.ply',(transl([1 0.5 0])*trotz(90,'deg')));
-    drawObject('shelf fix.ply',(transl([3 0.5 0])*trotz(90,'deg')));
-    drawObject('table.ply',(transl([-1.5 0.5 0.42])));
+    drawObject('shelf fix.ply',(transl([1 0.55 0])*trotz(90,'deg')));
+    drawObject('shelf fix.ply',(transl([3 0.55 0])*trotz(90,'deg')));
+    drawObject('table.ply',(transl([-1.7 0.5 0.42])));
     drawObject('monitor.ply',(transl([-2.4 0.6 0.84])));
     drawObject('shopping_cart.ply',(transl([-1 -0.5 0])*trotz(180,'deg')));
     drawObject('HUMAN BODY.ply',(transl([-2.5 -0.4 0])*trotz(60,'deg')));
+    drawObject('barrier.ply',(transl([-2 -1 0])*trotz(90,'deg')));
+    drawObject('barrier.ply',(transl([4 -1 0])*trotz(90,'deg')));
+
 end

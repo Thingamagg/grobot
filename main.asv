@@ -5,14 +5,14 @@ function [ ] = main()
     UR10_modified;
     EV10;
     
-    global q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready held q2Height;
+    global q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready passover held q2Height;
                  %x    y    z
     workspace = [-3 4.5 -2 2 -0 3];
     axis normal
     view(3)
     scale = 0.2;
 
-        
+                                                                            %Using this many global variables is 100% bad practice but don't have a better solution
     robot1 = EV10();%robot1.workspace = workspace
     q1 = zeros(1,6);
     q1_target = zeros(1,6);
@@ -27,9 +27,9 @@ function [ ] = main()
     angularlimit = 0.3;
     obj_target = 1;
     handoffready = 0;
+    passover = [0 0]
     held = [0 0];
     
-
     robot1.workspace = workspace;robot2.workspace = workspace;
 
     robot1.model.base = robot1.model.base * transl(-1,0.2,0.84);
@@ -48,19 +48,17 @@ function [ ] = main()
     target = objs.object{obj_target}.base;
     
     
-    %drawEnvironment();
+    drawEnvironment();
     
     
     
     q2_target = findQ(objs.object{obj_target}.base,robot2.model);
     q2_base_target = findBasePos(objs.object{obj_target}.base);
     
-    %objs.object{obj_target}.base * transl([robot2.base(1,4)-objs.object{obj_target}.base(1,4) 0 0])
-    %a = findQ(objs.object{obj_target}.base,robot2)
-
     view(3)
-    %robot2.model.teach()
     
+    
+    %robot1.model.teach()
     
     for k1 = 1:1000
         %global velocitylimit q1 q1_target q2 q2_target obj_target handoffready
@@ -160,16 +158,25 @@ function [nextQ,nextTargetQ] = UR10Flowchart(q, targetq, base, groceries, ur10)
     %else
         %nextTargetQ = objgrab_q;
     end
-    nextQ = getNextPos(ur10,q,nextTargetQ);
-    q2_base = getNextMatrix(q2_base,q2_base_target);
-
+    
+    if atPosition(ev10,q,state3,tolerance)
+            passover(1) = 1
+    end
+        if passover(1) == 1
+            nextQ = getNextPos(ur10,q,nextTargetQ);
+            q2_base = getNextMatrix(q2_base,q2_base_target);
+        else
+            nextQ = getNextPos(ur10,q,state3);
+        end
 end
 
 function [nextQ,nextTargetQ] = EV10Flowchart(q,targetq,groceries,ev10)
-    global handoffready held
+    global handoffready held passover
     state1 = deg2rad([-30 45 -135 90 -120 -20]); %ready to handoff
     state2 = deg2rad([-90 -20 -80 90 -90 -20]);    %deposit
+    state3 = deg2rad([-90 20 -115 90 0 0]);     %collision avoidance
     tolerance = 0.1;
+    
     
     nextTargetQ = targetq;
     nextQ = q;
@@ -179,28 +186,40 @@ function [nextQ,nextTargetQ] = EV10Flowchart(q,targetq,groceries,ev10)
             if atPosition(ev10,q,state1,tolerance)
                 nextTargetQ = state2;
                 handoffready = 1;
+                passover(1) = 0
             end
         elseif (targetq == state2)
             if atPosition(ev10,q,state2,tolerance)
                 nextTargetQ = state1;
-                cleanUp(groceries.object(held(1)))
+                placeInCart(groceries,held(1))
                 held(1) = 0
+                passover(1) = 0
             end
         else
             nextTargetQ = state1;
         end
-        nextQ = getNextPos(ev10,q,nextTargetQ);
+        if atPosition(ev10,q,state3,tolerance)
+            passover(1) = 1
+        end
+        
+        if passover(1) == 1
+            nextQ = getNextPos(ev10,q,nextTargetQ);
+        else
+            nextQ = getNextPos(ev10,q,state3);
+        end
     end
 end
 
 function matrix = cartCoords(x,y)
-    matri
+    matrix = transl([(-1.5 +(x*0.2)),(-0.6 + (y*0.2)),(0.5)])
 end
 
 function placeInCart(groceries,num)
-    positions = [repmat([0 1], 1, 4);repmat([1 2 3 4], 1, 2)]'
-    for i = 1:8
-        if 
+    positions = [1 1 2 2 3 3 4 4;repmat([0 1], 1, 4);]'
+    if num <= 8
+        groceries.object{num}.base = cartCoords(positions(num,1),positions(num,2))
+    end
+end
 
 % function closest = findClosestObject(groceries)
 %     closest = 1
@@ -227,7 +246,7 @@ end
 function target = selectNewTarget()
     global obj_target
     target = obj_target
-    if (obj_target<10)
+    if (obj_target<8)
         target = obj_target+1
     end
 end
@@ -305,4 +324,7 @@ function drawEnvironment()
     drawObject('monitor.ply',(transl([-2.4 0.6 0.84])));
     drawObject('shopping_cart.ply',(transl([-1 -0.5 0])*trotz(180,'deg')));
     drawObject('HUMAN BODY.ply',(transl([-2.5 -0.4 0])*trotz(60,'deg')));
+    drawObject('barrier.ply',(transl([-2 -1 0])*trotz(90,'deg')));
+    drawObject('barrier.ply',(transl([4 -1 0])*trotz(90,'deg')));
+
 end
