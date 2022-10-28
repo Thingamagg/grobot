@@ -80,7 +80,7 @@ varargout{1} = handles.output;
 cla
 axes(handles.axes1); 
 
-main;
+%main;
 
 L1 = Link('d',0.1807,'a',0,'alpha',pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
 L2 = Link('d',0,'a',-0.6127,'alpha',0,'offset',0,'qlim',[deg2rad(-90),deg2rad(90)]); 

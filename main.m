@@ -4,10 +4,11 @@ function [ ] = main()
 
     stopbutton
     readybutton
+    hazardbutton
     UR10_modified;
     EV10;
     
-    global stopflag q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready passover held q2Height;
+    global stopflag q1 q1_target q2 q2_target q2_base q2_base_target velocitylimit angularlimit obj_target handoffready passover held q2Height hazardready;
                  %x    y    z
     workspace = [-3 4.5 -2 2 -0 3];
     axis normal
@@ -31,6 +32,7 @@ function [ ] = main()
     handoffready = 0;
     passover = [0 0];
     held = [0 0];
+    hazardready
     
     robot1.workspace = workspace;robot2.workspace = workspace;
 
@@ -45,16 +47,24 @@ function [ ] = main()
     %robot2.plot(q2,'workspace',workspace,'scale',scale);
     
     
-    objs = GroceryObject(8,workspace);
+    objs = GroceryObject(2,workspace);
     
     target = objs.object{obj_target}.base;
     
+    lightcurtain = transl([3.75 2 1]);
+    lightcurtain(:,:,2) = lightcurtain*transl([0 -4 0]);
+    v = [lightcurtain(1:3,4,1),lightcurtain(1:3,4,2)]';
+    
+    plot3(v(:,1),v(:,2),v(:,3),'y')
+    
+    hazard = HazardObject()
+    checkLightCurtain(hazard,lightcurtain);
     
     drawEnvironment();
     
     %q1 = deg2rad([-90 20 -115 90 0 0]);
     %q2 = deg2rad([-90 -135 45 0 0 0]);
-    q2_target = findQ(objs.object{obj_target}.base,robot2.model);
+    aq2_target = findQ(objs.object{obj_target}.base,robot2.model);
     q2_base_target = findBasePos(objs.object{obj_target}.base);
     
     view(3)
@@ -80,7 +90,63 @@ function [ ] = main()
             objs.animate()
             %drawnow
         end
+        if isempty(hazard) == 0
+            if hazardready == true
+                hazard.move(transl([-0.2 0 0]));
+            end
+            if checkLightCurtain(hazard,lightcurtain)
+                stopflag = 1;
+            end
+        end
     end
+end
+
+function result = checkLightCurtain(hazard,curtain)
+% Get the transform of every joint (i.e. start and end of every link)
+    %tr = GetLinkPoses(qMatrix(qIndex,:), robot);
+    result = false;
+    % Go through each link and also each triangle face
+    for faceIndex = 1:size(hazard.faces,1)
+        vertOnPlane = hazard.vertex(hazard.faces(faceIndex,1)',:);
+        [intersectP,check] = LinePlaneIntersection(hazard.normals(faceIndex,:),vertOnPlane,curtain(1:3,4,1)',curtain(1:3,4,2)'); 
+        if check == 1 && IsIntersectionPointInsideTriangle(intersectP,hazard.vertex(hazard.faces(faceIndex,:)',:))
+            %plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
+            display('Hazard Detected');
+            result = true;
+            return
+        end
+    end    
+end
+
+function result = IsIntersectionPointInsideTriangle(intersectP,triangleVerts)
+
+u = triangleVerts(2,:) - triangleVerts(1,:);
+v = triangleVerts(3,:) - triangleVerts(1,:);
+
+uu = dot(u,u);
+uv = dot(u,v);
+vv = dot(v,v);
+
+w = intersectP - triangleVerts(1,:);
+wu = dot(w,u);
+wv = dot(w,v);
+
+D = uv * uv - uu * vv;
+
+% Get and test parametric coords (s and t)
+s = (uv * wv - vv * wu) / D;
+if (s < 0.0 || s > 1.0)        % intersectP is outside Triangle
+    result = 0;
+    return;
+end
+
+t = (uv * wu - uu * wv) / D;
+if (t < 0.0 || (s + t) > 1.0)  % intersectP is outside Triangle
+    result = 0;
+    return;
+end
+
+result = 1;                      % intersectP is in Triangle
 end
 
 function newq = velocityMatrixSanitise(robot,qMatrix,qdot)
@@ -235,6 +301,7 @@ end
 %     end
 % end
 
+
 function dist = Distance(matrix1, matrix2)
     dist = norm(matrix1-matrix2);
 end
@@ -349,8 +416,15 @@ end
 function readybutton
     button = uicontrol
     button.String = 'Restart'
-    button.Position = [120 25 60 30]
+    button.Position = [110 25 60 30]
     button.Callback = @Ready
+end
+
+function hazardbutton
+    button = uicontrol
+    button.String = 'Hazard'
+    button.Position = [175 25 60 30]
+    button.Callback = @SummonHazard
 end
     
 function Stop(btn,event)
@@ -371,3 +445,8 @@ global stopflag
     end
 end
 
+function SummonHazard(btn,event)
+    global hazardready
+    hazardready = true
+end
+    
