@@ -51,8 +51,8 @@ function [ ] = main()
     
     target = objs.object{obj_target}.base;
     
-    lightcurtain = transl([3.75 2 1]);
-    lightcurtain(:,:,2) = lightcurtain*transl([0 -4 0]);
+    lightcurtain = transl([3.95 -0.1 1]);
+    lightcurtain(:,:,2) = lightcurtain*transl([0 -1.8 0]);
     v = [lightcurtain(1:3,4,1),lightcurtain(1:3,4,2)]';
     
     plot3(v(:,1),v(:,2),v(:,3),'y')
@@ -402,6 +402,11 @@ function drawEnvironment()
     drawObject('barrier.ply',(transl([4 -1 0])*trotz(90,'deg')));
     drawObject('rail.ply',(transl([2 0 0])*trotz(90,'deg')));
     drawObject('estop.ply',(transl([-2.2 0.2 0.84])));
+    drawObject('lightcurtain.ply',(transl([3.95 -0.1 0])*trotz(0,'deg')));
+    drawObject('lightcurtain.ply',(transl([3.95 -1.9 0])*trotz(180,'deg')));
+    drawObject('lightcurtain.ply',(transl([-1.95 -0.1 0])*trotz(0,'deg')));
+    drawObject('lightcurtain.ply',(transl([-1.95 -1.9 0])*trotz(180,'deg')));
+    plot3([-1.95 -1.95],[-0.1 -1.9],[1 1],'y');
 
 end
 
