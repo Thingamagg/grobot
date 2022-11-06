@@ -13,7 +13,7 @@ classdef (ConstructOnLoad = true) HazardObject < handle
     methods
         function self = HazardObject()
             self.side = 0.5;
-            self.position = transl([5 -1.2 0]);
+            self.position = transl([8 -1.2 0]);
             self.offset = [0 0 1];
             plotOptions.plotFaces = false;
             [vertex,faces,faceNormals] = RectangularPrism(self.position(1:3,4)'-self.side/2, self.position(1:3,4)'+self.side/2,plotOptions);

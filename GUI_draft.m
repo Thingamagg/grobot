@@ -22,7 +22,7 @@ function varargout = GUI_draft(varargin)
 
 % Edit the above text to modify the response to help GUI_draft
 
-% Last Modified by GUIDE v2.5 24-Oct-2022 03:10:07
+% Last Modified by GUIDE v2.5 24-Oct-2022 12:50:08
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,6 +63,7 @@ if strcmp(get(hObject,'Visible'),'off')
     plot(rand(5));
 end
 
+
 % UIWAIT makes GUI_draft wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -78,45 +79,11 @@ function varargout = GUI_draft_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 cla
-axes(handles.axes1); 
+hold on;
+main();
 
-%main;
-
-L1 = Link('d',0.1807,'a',0,'alpha',pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
-L2 = Link('d',0,'a',-0.6127,'alpha',0,'offset',0,'qlim',[deg2rad(-90),deg2rad(90)]); 
-L3 = Link('d',0,'a',-0.57155,'alpha',0,'offset',0,'qlim',[deg2rad(-170),deg2rad(170)]); 
-L4 = Link('d',0.17415,'a',0,'alpha',pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
-L5 = Link('d',0.11985,'a',0,'alpha',-pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
-L6 = Link('d',0.11655,'a',0,'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]); 
-model = SerialLink([L1 L2 L3 L4 L5 L6],'name','UR10'); 
-for linkIndex = 0:model.n 
-    [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['UR10Link',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>         
-    model.faces{linkIndex+1} = faceData; 
-    model.points{linkIndex+1} = vertexData; 
-end 
-% Display robot 
-workspace = [-2 2 -2 2 -0.3 2];    
-model.plot3d(zeros(1,model.n),'noarrow','workspace',workspace); 
-if isempty(findobj(get(gca,'Children'),'Type','Light')) 
-    camlight 
-end   
-model.delay = 0; 
-% Try to correctly colour the arm (if colours are in ply file data) 
-for linkIndex = 0:model.n 
-    handles = findobj('Tag', model.name); 
-    h = get(handles,'UserData'); 
-    try  
-        h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ... 
-                                                      , plyData{linkIndex+1}.vertex.green ... 
-                                                      , plyData{linkIndex+1}.vertex.blue]/255; 
-        h.link(linkIndex+1).Children.FaceColor = 'interp'; 
-    catch ME_1 
-        disp(ME_1); 
-        continue; 
-    end 
-end 
 data = guidata(hObject); 
-data.model = model; 
+data.robot1 = robot1; 
 guidata(hObject,data); 
  
 
@@ -186,11 +153,11 @@ set(hObject, 'String', {'plot(rand(5))', 'plot(sin(1:0.01:25))', 'bar(1:.5:10)',
 
 % --- Executes on button press in plusx.
 function plusx_Callback(hObject, eventdata, handles)
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
-tr(1,4) = tr(1,4) + 0.01; 
-newQ = handles.model.ikcon(tr,q); 
-handles.model.animate(newQ); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
+tr(1,4) = tr(1,4) + 0.05; 
+newQ = handles.robot1.ikcon(tr,q); 
+handles.robot1.animate(newQ); 
 
 %print to end effector coordinates
 stringX = sprintf('%.2f', tr(1,4));
@@ -229,11 +196,11 @@ set(handles.q6val,'String', string_q6);
 
 % --- Executes on button press in minusX.
 function minusX_Callback(hObject, eventdata, handles)
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
-tr(1,4) = tr(1,4) - 0.01; 
-newQ = handles.model.ikcon(tr,q); 
-handles.model.animate(newQ); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
+tr(1,4) = tr(1,4) - 0.05; 
+newQ = handles.robot1.ikcon(tr,q); 
+handles.robot1.animate(newQ); 
 
 %print to end effector coordinates
 stringX = sprintf('%.2f', tr(1,4));
@@ -270,11 +237,11 @@ set(handles.q6val,'String', string_q6);
 
 % --- Executes on button press in plusy.
 function plusy_Callback(hObject, eventdata, handles)
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
-tr(2,4) = tr(2,4) + 0.01; 
-newQ = handles.model.ikcon(tr,q); 
-handles.model.animate(newQ); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
+tr(2,4) = tr(2,4) + 0.05; 
+newQ = handles.robot1.ikcon(tr,q); 
+handles.robot1.animate(newQ); 
 
 %print to end effector coordinates
 stringX = sprintf('%.2f', tr(1,4));
@@ -312,11 +279,11 @@ set(handles.q6val,'String', string_q6);
 
 % --- Executes on button press in minusy.
 function minusy_Callback(hObject, eventdata, handles)
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
-tr(2,4) = tr(2,4) - 0.01; 
-newQ = handles.model.ikcon(tr,q); 
-handles.model.animate(newQ); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
+tr(2,4) = tr(2,4) - 0.05; 
+newQ = handles.robot1.ikcon(tr,q); 
+handles.robot1.animate(newQ); 
 
 %print to end effector coordinates
 stringX = sprintf('%.2f', tr(1,4));
@@ -353,11 +320,11 @@ set(handles.q6val,'String', string_q6);
 
 % --- Executes on button press in plusZ.
 function plusZ_Callback(hObject, eventdata, handles)
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
-tr(3,4) = tr(3,4) + 0.01; 
-newQ = handles.model.ikcon(tr,q); 
-handles.model.animate(newQ); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
+tr(3,4) = tr(3,4) + 0.05; 
+newQ = handles.robot1.ikcon(tr,q); 
+handles.robot1.animate(newQ); 
 
 %print to end effector coordinates
 stringX = sprintf('%.2f', tr(1,4));
@@ -394,11 +361,11 @@ set(handles.q6val,'String', string_q6);
 
 % --- Executes on button press in minusZ.
 function minusZ_Callback(hObject, eventdata, handles)
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
-tr(3,4) = tr(3,4) - 0.01; 
-newQ = handles.model.ikcon(tr,q); 
-handles.model.animate(newQ); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
+tr(3,4) = tr(3,4) - 0.05; 
+newQ = handles.robot1.ikcon(tr,q); 
+handles.robot1.animate(newQ); 
 
 %print to end effector coordinates
 stringX = sprintf('%.2f', tr(1,4));
@@ -436,12 +403,12 @@ set(handles.q6val,'String', string_q6);
 % --- Executes on slider movement.
 function q1_Callback(hObject, eventdata, handles)
 data = get(handles.q1,'Value');
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
 
 q(1) = data;
  
-handles.model.animate(q);
+handles.robot1.animate(q);
 
 string = sprintf('%.2f', data);
 
@@ -478,12 +445,12 @@ end
 % --- Executes on slider movement.
 function q2_Callback(hObject, eventdata, handles)
 data = get(handles.q2,'Value');
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
 
 q(2) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 
 string = sprintf('%.2f', data);
 
@@ -520,12 +487,12 @@ end
 % --- Executes on slider movement.
 function q3_Callback(hObject, eventdata, handles)
 data = get(handles.q3,'Value');
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
 
 q(3) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 
 string = sprintf('%.2f', data);
 
@@ -563,12 +530,12 @@ end
 % --- Executes on slider movement.
 function q4_Callback(hObject, eventdata, handles)
 data = get(handles.q4,'Value');
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
 
 q(4) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 
 string = sprintf('%.2f', data);
 set(handles.q4val,'String', string);
@@ -604,12 +571,12 @@ end
 % --- Executes on slider movement.
 function q5_Callback(hObject, eventdata, handles)
 data = get(handles.q5,'Value');
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
 
 q(5) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 
 string = sprintf('%.2f', data);
 set(handles.q5val,'String', string);
@@ -645,11 +612,11 @@ end
 % --- Executes on slider movement.
 function q6_Callback(hObject, eventdata, handles)
 data = get(handles.q6,'Value');
-q = handles.model.getpos; 
-tr = handles.model.fkine(q); 
+q = handles.robot1.getpos; 
+tr = handles.robot1.fkine(q); 
 
 q(6) = data;
-handles.model.animate(q);
+handles.robot1.animate(q);
 
 string = sprintf('%.2f', data);
 set(handles.q6val,'String', string);
@@ -685,12 +652,12 @@ end
 
 function q1val_Callback(hObject, eventdata, handles)
 data = str2double(get(handles.q1val,'String'));
-q = handles.model.getpos; 
+q = handles.robot1.getpos; 
 
 
 q(1) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 % hObject    handle to q1val (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -715,12 +682,12 @@ end
 
 function q2val_Callback(hObject, eventdata, handles)
 data = str2double(get(handles.q2val,'String'));
-q = handles.model.getpos; 
+q = handles.robot1.getpos; 
 
 
 q(2) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 % hObject    handle to q2val (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -745,12 +712,12 @@ end
 
 function q3val_Callback(hObject, eventdata, handles)
 data = str2double(get(handles.q3val,'String'));
-q = handles.model.getpos; 
+q = handles.robot1.getpos; 
 
 
 q(3) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 % hObject    handle to q3val (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -775,12 +742,12 @@ end
 
 function q4val_Callback(hObject, eventdata, handles)
 data = str2double(get(handles.q4val,'String'));
-q = handles.model.getpos; 
+q = handles.robot1.getpos; 
 
 
 q(4) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 % hObject    handle to q4val (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -805,12 +772,12 @@ end
 
 function q5val_Callback(hObject, eventdata, handles)
 data = str2double(get(handles.q5val,'String'));
-q = handles.model.getpos; 
+q = handles.robot1.getpos; 
 
 
 q(5) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 % hObject    handle to q5val (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -835,12 +802,12 @@ end
 
 function q6val_Callback(hObject, eventdata, handles)
 data = str2double(get(handles.q6val,'String'));
-q = handles.model.getpos; 
+q = handles.robot1.getpos; 
 
 
 q(6) = data;
  
-handles.model.animate(q); 
+handles.robot1.animate(q); 
 % hObject    handle to q6val (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -950,12 +917,12 @@ function axes1_ButtonDownFcn(hObject, eventdata, handles)
 % --- Executes on slider movement.
 function q1_2_Callback(hObject, eventdata, handles)
 data = get(handles.q1_2,'Value');
-q = handles.model2.getpos; 
-tr = handles.model2.fkine(q); 
+q = handles.robot2.getpos; 
+tr = handles.robot2.fkine(q); 
 
 q(1) = data;
  
-handles.model2.animate(q);
+handles.robot2.animate(q);
 
 % hObject    handle to q1_2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -980,5 +947,12 @@ end
 % --- Executes on button press in Estop.
 function Estop_Callback(hObject, eventdata, handles)
 % hObject    handle to Estop (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in teach.
+function teach_Callback(hObject, eventdata, handles)
+% hObject    handle to teach (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)

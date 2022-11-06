@@ -1,10 +1,10 @@
 function [ ] = main()
-    clf
-    clear all
+    %clf
+    %clear all
 
-    stopbutton
-    readybutton
-    hazardbutton
+    %stopbutton
+    %readybutton
+    %hazardbutton
     UR10_modified;
     EV10;
     
@@ -92,7 +92,9 @@ function [ ] = main()
         end
         if isempty(hazard) == 0
             if hazardready == true
-                hazard.move(transl([-0.2 0 0]));
+                if hazard.position(1,4)>=-3
+                    hazard.move(transl([-0.2 0 0]));
+                end
             end
             if checkLightCurtain(hazard,lightcurtain)
                 stopflag = 1;
